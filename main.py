@@ -40,20 +40,22 @@ plt.show()
 # MRI_volume = sitk.Cast(MRI_volume, sitk.sitkUInt8)
 
 # extract middle slice on LP plane
-size = MRI_volume.GetSize()
-z = (0, size[2]/2)
+z = (0, MRI_volume.GetSize()[2]-1)
 
 # plot data
 plt.figure(figsize=(5,5))
-plt.imshow(sitk.GetArrayFromImage(MRI_volume)[:,:,22], cmap = "gray")
+plt.imshow(sitk.GetArrayFromImage(MRI_volume)[:,z], cmap = "gray")
 plt.axis('off')
 plt.show()
 
 # seed points
-seeds = []
+seeds = [MRI_volume.TransformPhysicalPointToIndex((-19.238, -11.734,27.457)),
+         MRI_volume.TransformPhysicalPointToIndex((-3.698, -7.554, 2.696)),
+         MRI_volume.TransformPhysicalPointToIndex((-21.334, -5.608, -8.828)),
+         MRI_volume.TransformPhysicalPointToIndex((-33.998, -9.346, 13.313))]
 
 '''# create mask
-prostate_mask = ut.prostate_segmenter(MRI_volume)
+prostate_mask = ut.prostate_segmenter(MRI_volume, seeds, 300, 1850)
 
 # write mask to file
 sitk.WriteImage(prostate_mask, "my_segmentation.nrrd")
@@ -69,4 +71,4 @@ plt.imshow(sitk.GetArrayFromImage(img_overlap))'''
 given_overlap = sitk.LabelOverlay(MRI_volume, given_mask)
 
 plt.figure(figsize=(15,15))
-plt.imshow(sitk.GetArrayFromImage(given_overlap)[:,:,z])
+plt.imshow(sitk.GetArrayFromImage(given_overlap)[z])
