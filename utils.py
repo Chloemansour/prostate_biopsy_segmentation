@@ -11,9 +11,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def prostate_segmenter():
+def prostate_segmenter(volumetric_data):
     pass
 
+    return
 
 
 def seg_eval_dice():
