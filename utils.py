@@ -11,22 +11,24 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def prostate_segmenter(volumetric_data, seed, lower, upper):
+def prostate_segmenter(volumetric_data, seed, multiplier, radius, num_iteration):
     '''
 
     :param volumetric_data:
     :param seed:
-    :param lower:
-    :param upper:
+    :param multiplier:
+    :param radius:
+    :param num_iteration:
     :return:
     '''
 
-    connected_filter = sitk.ConnectedThresholdImageFilter()
-    connected_filter.SetSeedList(seed)
-    connected_filter.SetUpper(upper)
-    connected_filter.SetLower(lower)
+    confid_filter = sitk.ConfidenceConnectedImageFilter()
+    confid_filter.SetSeedList(seed)
+    confid_filter.SetMultiplier(multiplier)
+    confid_filter.SetInitialNeighborhoodRadius(radius)
+    confid_filter.SetNumberOfIterations(num_iteration)
 
-    volume_mask = connected_filter.Execute(volumetric_data)
+    volume_mask = confid_filter.Execute(volumetric_data)
 
     return volume_mask
 
@@ -39,9 +41,10 @@ def seg_eval_dice(ref_mask, mask):
     :return:
     '''
     dice_coefficient = sitk.LabelOverlapMeasuresImageFilter()
+    dice_coefficient.Execute(ref_mask, mask)
     dice_coefficient.GetDiceCoefficient(ref_mask, mask)
 
-    return dice_coefficient.Execute(ref_mask, mask)
+    return dice_coefficient.GetDiceCoefficient(ref_mask, mask)
 
 def seg_eval_hausdorff(ref_mask, mask):
     '''
@@ -63,15 +66,13 @@ def get_target_loc(ref_mask):
     :return:
     '''
 
-    x = [points[0] for points in ref_mask]
-    y = [points[1] for points in ref_mask]
+    stats = sitk.LabelShapeStatisticsImageFilter()
+    stats.Execute(ref_mask)
+    centroid = stats.GetCentroid(1)
 
-    centroid_mask = (sum(x) / len(ref_mask),
-                     sum(y) / len(ref_mask))
-
-    centroid_mask = (centroid_mask[0].TransformIndexToPhysicalPoint, centroid_mask[1].TransformIndexToPhysicalPoint)
-
-    return centroid_mask
+    return centroid
 
 def pixel_extract(img, point, width):
     pass
+
+
