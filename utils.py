@@ -6,13 +6,17 @@
 ### Description of File:
 
 import SimpleITK as sitk
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 
 
-def prostate_segmenter(volumetric_data, seed, sigma=1.5):
 
+def prostate_segmenter(volumetric_data, seed, sigma):
+    '''
+
+    :param volumetric_data:
+    :param seed:
+    :param sigma:
+    :return:
+    '''
 
     feature_img = sitk.GradientMagnitudeRecursiveGaussian(volumetric_data, sigma=sigma)
 
@@ -50,9 +54,8 @@ def seg_eval_dice(ref_mask, mask):
     '''
     dice_coefficient = sitk.LabelOverlapMeasuresImageFilter()
     dice_coefficient.Execute(ref_mask, mask)
-    dice_coefficient.GetDiceCoefficient(ref_mask, mask)
 
-    return dice_coefficient.GetDiceCoefficient(ref_mask, mask)
+    return dice_coefficient.GetDiceCoefficient()
 
 def seg_eval_hausdorff(ref_mask, mask):
     '''
@@ -64,9 +67,8 @@ def seg_eval_hausdorff(ref_mask, mask):
 
     haus_filter = sitk.HausdorffDistanceImageFilter()
     haus_filter.Execute(ref_mask, mask)
-    haus_filter.GetHausdorffDistance(ref_mask,mask)
 
-    return haus_filter.GetHausdorffDistance(ref_mask,mask)
+    return haus_filter.GetHausdorffDistance()
 
 def get_target_loc(ref_mask):
     '''
@@ -95,12 +97,12 @@ def get_target_loc(ref_mask):
     stats.Execute(thick_mask)
     centroid = stats.GetCentroid(1)
 
-    print("The centroid point to preform the biopsy is at:", centroid)
-
+    # transform
     centroid_idx = thick_mask.TransformPhysicalPointToIndex(centroid)
 
     centroid_final = (centroid_idx[0], centroid_idx[1], max(area_dict, key=area_dict.get))
     centroid_final = ref_mask.TransformIndexToPhysicalPoint(centroid_final)
+    print("The centroid point to preform the biopsy is at:", centroid_final)
 
     return centroid_final
 
