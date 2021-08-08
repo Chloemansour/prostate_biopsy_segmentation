@@ -32,12 +32,6 @@ print(MRI_volume.GetPixelIDTypeAsString())
 pixel_filter = sitk.StatisticsImageFilter()
 pixel_filter.Execute(MRI_volume)
 
-print("Min pixel value:", pixel_filter.GetMinimum())
-print("Max pixel value:", pixel_filter.GetMaximum())
-
-# visualize MRI volume image pixel intensities
-plt.hist(sitk.GetArrayFromImage(MRI_volume).flatten(), bins=70)
-plt.show()
 
 # get physical extent
 spacing = MRI_volume.GetSpacing()
@@ -63,8 +57,6 @@ seeds = [MRI_volume.TransformPhysicalPointToIndex((-16.965, -25.925, 13.076)),
          MRI_volume.TransformPhysicalPointToIndex((-16.937, -14.708, 29.173))]
 
 
-
-
 # create mask
 
 prostate_mask = ut.prostate_segmenter(MRI_volume, seeds, sigma=1.5)
@@ -77,35 +69,58 @@ sitk.WriteImage(prostate_mask, "my_segmentation.nrrd")
 img_overlap = sitk.LabelOverlay(MRI_volume,prostate_mask)
 img_overlap_scaled = sitk.RescaleIntensity(img_overlap)
 
-#ex_viewer.Execute(img_overlap)
-
 # view middle 2D LP slice
 sizez = img_overlap_scaled.GetSize()[2]
 z = round(sizez/2)
 
-img_overlap_slice = img_overlap_scaled[:,:,z]
+
 plt.figure(figsize=(15,15))
-plt.imshow(sitk.GetArrayFromImage(img_overlap_slice), vmin=0, vmax = 255,  extent = [x0,x1,y0,y1])
+plt.imshow(sitk.GetArrayFromImage(img_overlap_scaled[:,:,z]), vmin=0, vmax=255, extent = [x0,x1,y0,y1])
+plt.axis('off')
+plt.savefig("Created_Seg_Image_Overlay.PNG")
 plt.show()
+
 
 # overlay provided mask onto image and view 2D LP slice
 given_overlap = sitk.LabelOverlay(MRI_volume, given_mask)
 
-# view middle 2D LP slice
+# view middle 2D LP slice with mask
 img_given = given_overlap[:,:,z]
 img_given = sitk.RescaleIntensity(img_given)
+
 plt.figure(figsize=(15,15))
 plt.imshow(sitk.GetArrayFromImage(img_given), vmin=0, vmax=255,  extent = [x0,x1,y0,y1])
 plt.axis('off')
+plt.savefig("Given_Seg_Image_Overlay.PNG")
 plt.show()
 
+dice = ut.seg_eval_dice(given_mask, prostate_mask)
+print("The dice coeffient is:",dice)
 
+haus = ut.seg_eval_hausdorff(given_mask, prostate_mask)
+print("The hausdorff distance is:", haus)
 
+# determine centroid point for biopsy
 centroid_final = ut.get_target_loc(given_mask)
+centroid_loc_idx = given_mask.TransformPhysicalPointToIndex(centroid_final)
+
+# overlay centroid location on original image
+plt.figure(figsize=(15,10))
+plt.gray()
+plt.title("Location of Biopsy Placement on Prostate", fontsize=12)
+plt.imshow(sitk.GetArrayFromImage(MRI_volume[:,:,centroid_loc_idx[2]]))
+plt.annotate("X", xy = (centroid_loc_idx[0], centroid_loc_idx[1]), color="red",fontsize=15)
+plt.axis('off')
+plt.savefig("Location_of_biopsy.PNG")
+plt.show()
+
+#
 voxel_biopsy = ut.pixel_extract(MRI_volume, centroid_final, 6)
 
 # plot distribution of pixel intensities around biopsy target
 plt.boxplot(voxel_biopsy)
 plt.ylabel("Pixel Intensity")
 plt.xlabel(centroid_final)
+plt.title("Boxplot of Pixel Distribution Around Biopsy Target")
+plt.savefig("Boxplot.png")
 plt.show()
