@@ -3,16 +3,14 @@
 ### Student Number: 20061726
 ### Date: August 7th, 2021
 
-### Link to repository:
+### Link to repository: https://github.com/Chloemansour/BMIF804_MiniProject_ChloeMansour.git
 
 
 ### Description of File: A workflow for fusion biopsy planning on prostate, includes prostate segementation, evaluation of segment,
 # determining the biopsy location, and determining tissue properties for post-biopsy analysis.
 
 import SimpleITK as sitk
-import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import utils as ut
 
 ex_viewer = sitk.ImageViewer()
