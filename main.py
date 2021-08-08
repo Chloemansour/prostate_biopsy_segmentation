@@ -6,7 +6,8 @@
 ### Link to repository:
 
 
-### Description of File:
+### Description of File: A workflow for fusion biopsy planning on prostate, includes prostate segementation, evaluation of segment,
+# determining the biopsy location, and determining tissue properties for post-biopsy analysis.
 
 import SimpleITK as sitk
 import numpy as np
@@ -44,7 +45,7 @@ y0 = origin[1]
 y1 = origin[1]+spacing[1]*size[1]
 
 
-# seed points
+# seed points obtained from 3D Slicer
 seeds = [MRI_volume.TransformPhysicalPointToIndex((-16.965, -25.925, 13.076)),
          MRI_volume.TransformPhysicalPointToIndex((-0.661, -0.569, 17.104)),
          MRI_volume.TransformPhysicalPointToIndex((-30.940, -2.501, 18.257)),
@@ -57,7 +58,7 @@ seeds = [MRI_volume.TransformPhysicalPointToIndex((-16.965, -25.925, 13.076)),
          MRI_volume.TransformPhysicalPointToIndex((-16.937, -14.708, 29.173))]
 
 
-# create mask
+# create mask segmentation
 
 prostate_mask = ut.prostate_segmenter(MRI_volume, seeds, sigma=1.5)
 
@@ -69,7 +70,7 @@ sitk.WriteImage(prostate_mask, "my_segmentation.nrrd")
 img_overlap = sitk.LabelOverlay(MRI_volume,prostate_mask)
 img_overlap_scaled = sitk.RescaleIntensity(img_overlap)
 
-# view middle 2D LP slice
+# view middle 2D LP slice with segment overlap
 sizez = img_overlap_scaled.GetSize()[2]
 z = round(sizez/2)
 
@@ -94,9 +95,11 @@ plt.axis('off')
 plt.savefig("Given_Seg_Image_Overlay.PNG")
 plt.show()
 
+# get dice similarity coefficient
 dice = ut.seg_eval_dice(given_mask, prostate_mask)
 print("The dice coeffient is:",dice)
 
+# get hausdorrf evaluation
 haus = ut.seg_eval_hausdorff(given_mask, prostate_mask)
 print("The hausdorff distance is:", haus)
 
@@ -114,7 +117,7 @@ plt.axis('off')
 plt.savefig("Location_of_biopsy.PNG")
 plt.show()
 
-#
+# get pixel intensities around biopsy location
 voxel_biopsy = ut.pixel_extract(MRI_volume, centroid_final, 6)
 
 # plot distribution of pixel intensities around biopsy target
