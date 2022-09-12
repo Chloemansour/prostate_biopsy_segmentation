@@ -1,1 +1,1 @@
-# BMIF804_MiniProject_ChloeMansour
+# Prostate Biopsy MRI Segmentation - BMIF804
